@@ -1,8 +1,6 @@
-package com.hackaton_one.sentiment_api.api.exceptions;
+package com.hackaton_one.sentiment_api.exceptions;
 
 import com.hackaton_one.sentiment_api.api.dto.ApiErrorResponse;
-import com.hackaton_one.sentiment_api.exceptions.ModelAnalysisException;
-import com.hackaton_one.sentiment_api.exceptions.ModelInitializationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

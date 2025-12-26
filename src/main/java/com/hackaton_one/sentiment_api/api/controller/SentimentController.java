@@ -7,11 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -107,40 +104,6 @@ public class SentimentController {
         } catch (Exception e) {
             return errorResponse("Error processing CSV: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(
-            MethodArgumentNotValidException ex) {
-        
-        String errorMessage = "Invalid input data";
-        
-        if (ex.getBindingResult() != null && ex.getBindingResult().hasFieldErrors()) {
-            FieldError firstError = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .orElse(null);
-            
-            if (firstError != null) {
-                errorMessage = firstError.getDefaultMessage() != null ? 
-                    firstError.getDefaultMessage() : 
-                    "Field '" + firstError.getField() + "' is invalid";
-            }
-        }
-        
-        Map<String, String> errorRes = new HashMap<>();
-        errorRes.put("message", errorMessage);
-        
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorRes);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleMessageNotReadableException(
-            HttpMessageNotReadableException ex) {
-        
-        Map<String, String> errorRes = new HashMap<>();
-        errorRes.put("message", "Request body is missing or invalid");
-        
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorRes);
     }
 
     private ResponseEntity<Map<String, String>> errorResponse(String message, HttpStatus status) {

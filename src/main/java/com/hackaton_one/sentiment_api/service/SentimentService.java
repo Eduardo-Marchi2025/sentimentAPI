@@ -141,7 +141,8 @@ public class SentimentService {
             previsao = "NEGATIVO";
             probabilidade = Math.min(0.7 + (negativeCount * 0.1), 0.95);
         } else {
-            previsao = "NEUTRO";
+            // Quando empate ou nenhuma palavra encontrada, assume POSITIVO como padrão
+            previsao = "POSITIVO";
             probabilidade = 0.5 + (Math.random() * 0.2);
         }
         

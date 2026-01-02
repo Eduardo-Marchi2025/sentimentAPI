@@ -25,7 +25,7 @@ public class Sentiment {
     @Column(nullable = false, length = 5000)
     private String textContent;
 
-    // Ex: "POSITIVO", "NEGATIVO", "NEUTRO"
+    // Ex: "POSITIVO", "NEGATIVO"
     @NotBlank(message = "O resultado da análise é obrigatório")
     private String sentimentResult;
 

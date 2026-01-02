@@ -87,7 +87,8 @@ public class BatchService {
                 // Analisa sentimento
                 SentimentResultDTO result = sentimentService.analyze(text);
                 
-                results.add(new SentimentResponseDTO(result.previsao(), result.probabilidade(), text));
+                // Garante que o sentimento está em maiúsculas (já vem normalizado do SentimentService)
+                results.add(new SentimentResponseDTO(result.previsao().toUpperCase(), result.probabilidade(), text));
                 lineCount++;
             }
         } catch (Exception e) {

@@ -57,6 +57,9 @@ public class SentimentService {
             this.modelAvailable = true;
             log.debug("Modelo ONNX carregado com sucesso de: " + MODEL_PATH);
         } catch (Exception e) {
+            if (e.getMessage().contains("Unsupported model IR version")) {
+                log.error("Incompatibilidade de versão: O modelo ONNX requer atualização do ONNX Runtime ou reconversão para IR versão compatível.");
+            }
             log.error("Erro ao carregar modelo ONNX: {}", e.getMessage(), e);
             this.modelAvailable = false;
             this.env = null;
@@ -107,11 +110,6 @@ public class SentimentService {
      * @return SentimentResultDTO com previsao e probabilidade
      */
     public SentimentResultDTO analyze(String text) {
-        // Se o modelo não estiver disponível, usa análise simples
-        if (!modelAvailable) {
-            return analyzeSimple(text);
-        }
-
         String[] inputData = new String[]{ text };
         long[] shape = new long[]{ 1, 1 };
 
@@ -126,10 +124,20 @@ public class SentimentService {
                 String[] labels = (String[]) results.get(0).getValue();
                 String previsao = labels[0];
 
-                @SuppressWarnings("unchecked")
-                List<Map<String, Float>> probsList = (List<Map<String, Float>>) results.get(1).getValue();
+                // Get the probability map - ONNX Runtime returns OnnxSequence containing OnnxMaps
+                Object probsObj = results.get(1).getValue();
 
-                Map<String, Float> mapProbability = probsList.get(0);
+                // Convert to List of OnnxMap
+                @SuppressWarnings("unchecked")
+                List<ai.onnxruntime.OnnxMap> probsList = (List<ai.onnxruntime.OnnxMap>) probsObj;
+
+                // Get the first map
+                ai.onnxruntime.OnnxMap onnxMap = probsList.get(0);
+
+                // Convert OnnxMap to java.util.Map using the getValue method
+                @SuppressWarnings("unchecked")
+                Map<String, Float> mapProbability = (Map<String, Float>) onnxMap.getValue();
+
                 float probabilidade = mapProbability.get(previsao);
                 
                 // Normaliza o sentimento (converte NEUTRO/NEUTRAL para POSITIVO)
@@ -150,51 +158,6 @@ public class SentimentService {
             log.error("Failed to prepare tensor for inference: {}", e.getMessage(), e);
             throw new ModelAnalysisException("Failed to prepare tensor for inference: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Análise simples baseada em palavras-chave (fallback quando modelo ONNX não está disponível)
-     */
-    private SentimentResultDTO analyzeSimple(String text) {
-        String textLower = text.toLowerCase();
-        
-        String[] positiveWords = {"incrível", "ótimo", "excelente", "bom", "maravilhoso", "recomendo", 
-                                  "adoro", "amo", "perfeito", "fantástico", "sensacional", "gostei", 
-                                  "satisfeito", "feliz", "amor", "adorar", "recomendado"};
-        String[] negativeWords = {"ruim", "péssimo", "horrível", "terrível", "odiei", "detesto", 
-                                   "não gostei", "insatisfeito", "decepcionado", "lixo", "fraco", 
-                                   "desapontado", "triste", "raiva", "ódio"};
-        
-        int positiveCount = 0;
-        int negativeCount = 0;
-        
-        for (String word : positiveWords) {
-            if (textLower.contains(word)) positiveCount++;
-        }
-        
-        for (String word : negativeWords) {
-            if (textLower.contains(word)) negativeCount++;
-        }
-        
-        String previsao;
-        double probabilidade;
-        
-        if (positiveCount > negativeCount) {
-            previsao = "POSITIVO";
-            probabilidade = Math.min(0.7 + (positiveCount * 0.1), 0.95);
-        } else if (negativeCount > positiveCount) {
-            previsao = "NEGATIVO";
-            probabilidade = Math.min(0.7 + (negativeCount * 0.1), 0.95);
-        } else {
-            // Quando empate ou nenhuma palavra encontrada, assume POSITIVO como padrão
-            previsao = "POSITIVO";
-            probabilidade = 0.5 + (Math.random() * 0.2);
-        }
-        
-        // Garante normalização (não deve ser necessário aqui, mas mantém consistência)
-        previsao = normalizeSentiment(previsao);
-        
-        return new SentimentResultDTO(previsao, probabilidade);
     }
 
     @PreDestroy

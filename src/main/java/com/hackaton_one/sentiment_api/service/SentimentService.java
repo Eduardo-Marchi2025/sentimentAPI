@@ -32,6 +32,15 @@ public class SentimentService {
 
     private boolean modelAvailable = false;
 
+    /**
+     * Verifica se o modelo ONNX está disponível e carregado.
+     *
+     * @return true se o modelo está disponível, false caso contrário
+     */
+    public boolean isModelAvailable() {
+        return modelAvailable;
+    }
+
     @PostConstruct
     public void init() {
         try {

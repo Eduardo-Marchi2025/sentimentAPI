@@ -11,7 +11,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class HistoryService {
-    private SentimentRepository sentimentRepository;
+    private final SentimentRepository sentimentRepository;
+
+    public HistoryService(SentimentRepository sentimentRepository) {
+        this.sentimentRepository = sentimentRepository;
+    }
 
     public HistoryItemListDTO getHistory() {
         try {

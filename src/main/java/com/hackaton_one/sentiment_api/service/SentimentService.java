@@ -2,10 +2,12 @@ package com.hackaton_one.sentiment_api.service;
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtSession;
+import com.hackaton_one.sentiment_api.api.dto.SentimentResponseDTO;
 import com.hackaton_one.sentiment_api.api.dto.SentimentResultDTO;
 import com.hackaton_one.sentiment_api.exceptions.ModelAnalysisException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,15 +33,13 @@ public class SentimentService {
     @Value("${sentiment.model.path:models/sentiment_model.onnx}")
     private String modelPath;
 
+    @Getter
     private boolean modelAvailable = false;
 
-    /**
-     * Verifica se o modelo ONNX está disponível e carregado.
-     *
-     * @return true se o modelo está disponível, false caso contrário
-     */
-    public boolean isModelAvailable() {
-        return modelAvailable;
+    private final SentimentPersistenceService persistenceService;
+
+    public SentimentService(SentimentPersistenceService persistenceService) {
+        this.persistenceService = persistenceService;
     }
 
     @PostConstruct
@@ -172,6 +172,31 @@ public class SentimentService {
             log.error("Failed to prepare tensor for inference: {}", e.getMessage(), e);
             throw new ModelAnalysisException("Failed to prepare tensor for inference: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Analisa o sentimento de um texto e persiste o resultado no banco de dados.
+     * Este método encapsula toda a lógica de negócio, incluindo:
+     * - Análise do sentimento
+     * - Normalização do resultado
+     * - Persistência no banco de dados
+     *
+     * @param text Texto a ser analisado
+     * @return SentimentResponseDTO pronto para ser retornado pela API
+     */
+    public SentimentResponseDTO analyzeAndSave(String text) {
+        SentimentResultDTO result = analyze(text);
+
+        String sentiment = result.previsao().toUpperCase();
+        double score = result.probabilidade();
+
+        try {
+            persistenceService.saveSentiment(text, sentiment, score);
+        } catch (Exception e) {
+            log.warn("Erro ao salvar análise no banco (continuando): {}", e.getMessage());
+        }
+
+        return new SentimentResponseDTO(sentiment, score, text);
     }
 
     @PreDestroy

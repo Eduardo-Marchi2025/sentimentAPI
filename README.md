@@ -1,148 +1,213 @@
-# sentimentAPI
+# SentimentAPI
 
-> API REST para análise automática de sentimentos em feedbacks de clientes. Integração Java Spring Boot + ONNX Runtime para classificar avaliações em Positivo ou Negativo.
+> API REST inteligente para análise automática de sentimentos em feedbacks de clientes. Integração robusta de Java Spring Boot com ONNX Runtime para classificação de avaliações.
 
 [![Status do Projeto](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)](https://github.com/Matheus-es/sentimentAPI)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Último Commit](https://img.shields.io/github/last-commit/Matheus-es/sentimentAPI)](https://github.com/Matheus-es/sentimentAPI)
+[![Java CI](https://img.shields.io/badge/Java-21-orange)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen)](https://spring.io/projects/spring-boot)
 
-Sumário
-- [Sobre](#sobre)
-- [Funcionalidades](#funcionalidades)
-- [Tecnologias](#tecnologias)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Como rodar](#como-rodar)
-- [Docker](#docker)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
+---
 
+## 📋 Sumário
 
-## Sobre
-Solução completa para análise de sentimentos em textos através de comentários e feedback de clientes. O modelo desenvolvido pela equipe de Data Science foi integrado a uma API REST, permitindo que outras aplicações consumam automaticamente a predição.
+- [Sobre](#-sobre)
+- [Funcionalidades](#-funcionalidades)
+- [Tecnologias](#-tecnologias)
+- [Pré-requisitos](#-pré-requisitos)
+- [Instalação e Execução Local](#-instalação-e-execução-local)
+- [Docker](#-docker)
+- [Documentação da API](#-documentação-da-api)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Contribuição](#-contribuição)
+- [Licença](#-licença)
 
-Classificação binária: POSITIVO / NEGATIVO
+---
 
-## Funcionalidades
-- Endpoints REST para classificação de texto (inferencia com modelo ONNX).
-- Documentação OpenAPI (SpringDoc).
-- Suporte a banco em memória H2 (padrão) e PostgreSQL (opcional).
-- Imagem Docker pronta para produção com otimizações de memória para ambientes com pouca RAM.
+## 📖 Sobre
 
-## Tecnologias
-- Linguagem: Java 21
-- Framework: Spring Boot 3.4.1
-- ONNX Runtime Java (versão usada no pom.xml: 1.20.0)
-- Build: Maven
-- Banco (opcional): H2 (runtime) / PostgreSQL (runtime)
-- Ferramentas: Docker, docker-compose
-- OpenAPI UI: springdoc-openapi
+**SentimentAPI** é uma solução backend para processamento de linguagem natural (NLP) focada em classificar textos de feedback como **POSITIVO** ou **NEGATIVO**. O projeto encapsula um modelo de Machine Learning (formato ONNX) em uma API Java de alta performance, pronta para integração com frontends de dashboards, sistemas de CRM ou pipelines de dados.
 
-## Pré-requisitos
-- Java 21 (JDK)
-- Maven (ou use o wrapper incluído: ./mvnw)
-- Docker e Docker Compose (se quiser rodar em contêiner)
-- Conexão com internet caso o Dockerfile precise baixar o modelo ONNX automaticamente
+## 🚀 Funcionalidades
 
-## Instalação (local)
+- **Análise em Tempo Real:** Endpoint para classificação unitária de textos.
+- **Processamento em Lote:** Upload de arquivos CSV para análise massiva de feedbacks.
+- **Dashboard de Métricas:** Endpoints para estatísticas agregadas e histórico de análises.
+- **Alta Compatibilidade:** Documentação automática via Swagger/OpenAPI.
+- **Containerização:** Imagem Docker otimizada para produção.
 
-⚠️ Aviso importante
-Para rodar a API localmente, é obrigatório baixar também o conteúdo do repositório de Data Science, pois é nele que se encontra o modelo ONNX utilizado na inferência de sentimentos.
-Sem esse modelo, a aplicação não inicializa corretamente o runtime do ONNX.
+## 🛠 Tecnologias
 
-Clone o repositório:
+- **Java 21**
+- **Spring Boot 3.4.1**
+- **ONNX Runtime** (Inferência de ML)
+- **Maven** (Gerenciamento de dependências)
+- **H2 Database** (Banco em memória para dev/testes)
+- **PostgreSQL** (Suportado para produção)
+- **Docker & Docker Compose**
+
+## ✅ Pré-requisitos
+
+- Java JDK 21 instalado
+- Maven instalado (ou utilizar o wrapper `./mvnw`)
+- Git
+
+## 💻 Instalação e Execução Local
+
+### 1. Clonar o repositório
+
 ```bash
 git clone https://github.com/Matheus-es/sentimentAPI.git
 cd sentimentAPI
 ```
 
-Build da aplicação (gera o jar em target/):
-```bash
-# usando wrapper (recomendado)
-./mvnw clean package -DskipTests
+### 2. Baixar o Modelo ONNX (Obrigatório para execução local)
 
-# ou com Maven instalado
-mvn clean package -DskipTests
+Se você **não** utilizar Docker, é necessário baixar o modelo de Machine Learning manualmente.
+
+1. Acesse: [SentimentONE Models](https://github.com/SentimentONE/sentimentIA/tree/main/03-models)
+2. Baixe o arquivo do modelo (`.onnx`).
+3. Coloque o arquivo em um diretório acessível ou na raiz do projeto.
+4. Configure o caminho do modelo na variável de ambiente `SENTIMENT_MODEL_PATH` (veja abaixo).
+
+### 3. Configurar Variáveis de Ambiente (Opcional)
+
+Para configurações personalizadas, crie um arquivo `.env` na raiz ou configure as variáveis no seu sistema.
+
+```properties
+# Exemplo
+SENTIMENT_MODEL_PATH=/caminho/para/seu_modelo.onnx
+SPRING_DATASOURCE_URL=jdbc:h2:mem:sentimentdb
 ```
 
-Executando o JAR:
+> **Nota:** Se não configurado, a aplicação buscará o modelo em caminhos padrão definidos no `application.properties`.
+
+### 4. Build e Execução
+
+Utilize o Maven Wrapper para garantir a versão correta do Maven:
+
 ```bash
+# Limpar e construir o projeto (ignorando testes para agilizar)
+./mvnw clean package -DskipTests
+
+# Executar a aplicação
 java -jar target/*.jar
 ```
 
-Também é possível rodar em desenvolvimento:
+Ou execute diretamente com o plugin do Spring Boot:
+
 ```bash
-# com wrapper
 ./mvnw spring-boot:run
-
-# ou
-mvn spring-boot:run
 ```
 
-No Windows: use `mvnw.cmd` em vez de `./mvnw`.
+Acesse a API em: `http://localhost:8080`
 
-## Configuração
-Existe suporte para H2 (padrão) e PostgreSQL. Para configurações sensíveis, crie um arquivo `.env` (ou configure variáveis de ambiente) com as chaves necessárias.
+## 🐳 Docker
 
-Variáveis de ambiente importantes:
-- SENTIMENT_MODEL_PATH: caminho absoluto para o arquivo do modelo ONNX (o Dockerfile define `/app/models/sentiment_model.onnx`)
-- SPRING_DATASOURCE_URL: URL do banco (se usar PostgreSQL)
-- SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
+> **Nota:** Ao utilizar Docker, **não é necessário baixar o modelo manualmente**. O processo de build do Docker já cuida disso automaticamente para você.
 
-Exemplo mínimo com `.env` (ajuste conforme seu ambiente):
-```
-SENTIMENT_MODEL_PATH=/caminho/para/sentiment_model.onnx
-SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/sentimentdb
-SPRING_DATASOURCE_USERNAME=usuario
-SPRING_DATASOURCE_PASSWORD=senha
-```
+Para rodar a aplicação em containers, certifique-se de ter o Docker e Docker Compose instalados.
 
-Observação: se não fornecer `SENTIMENT_MODEL_PATH`, a aplicação pode falhar ao inicializar o runtime ONNX — confira o Dockerfile e a lógica da aplicação para comportamento padrão.
+### Usando Docker Compose (Recomendado)
 
-## Como rodar (API)
-- Porta padrão: 8080 (conforme Dockerfile e configuração Spring Boot)
-- Documentação OpenAPI (Swagger UI): /swagger-ui.html ou /swagger-ui/index.html (SpringDoc). Também disponível: /v3/api-docs
+O comando abaixo irá construir a imagem e subir o container da aplicação:
 
-
-## Docker
-O repositório contém um Dockerfile otimizado em multi-stage que:
-- usa Maven para construir o JAR,
-- baixa o modelo ONNX do repositório SentimentONE durante o build,
-- copia o modelo para /app/models/sentiment_model.onnx,
-- define `SENTIMENT_MODEL_PATH=/app/models/sentiment_model.onnx`,
-- configura Java para uso em ambientes com pouca memória.
-
-Build e run:
-```bash
-# Build
-docker build -t sentiment-api .
-
-# Rodar
-docker run -p 8080:8080 --env SENTIMENT_MODEL_PATH=/app/models/sentiment_model.onnx sentiment-api
-```
-
-Usando docker-compose (há um arquivo docker-compose.yml no repositório). Exemplo:
 ```bash
 docker-compose up --build
 ```
 
-Observação: o Dockerfile baixa o modelo ONNX via URL no build; portanto, o build precisa de acesso à internet. Se preferir, baixe o modelo manualmente e monte o volume apontando para /app/models/sentiment_model.onnx.
+### Build Manual da Imagem
 
-## Licença
-Este projeto está licenciado sob a MIT License — veja o arquivo [LICENSE](LICENSE).
+```bash
+docker build -t sentiment-api .
+docker run -p 8080:8080 sentiment-api
+```
 
+## 📚 Documentação da API
 
-## Contribuição
-Contribuições são bem-vindas. Para contribuir:
-1. Fork o repositório.
-2. Crie uma branch com sua feature/fix: `git checkout -b feat/minha-feature`
-3. Abra um Pull Request descrevendo a mudança.
-4. Mantenha o padrão de código (format, testes) e adicione testes quando aplicável.
+A documentação interativa (Swagger UI) pode ser acessada em:
 
-Sugestão: incluir um template de ISSUE/PR no repositório para padronizar contribuições.
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+- **OpenAPI Docs:** `http://localhost:8080/v3/api-docs`
 
+### Principais Endpoints
 
+#### 1. Analisar Texto (Unitário)
 
-Projeto original/fonte: [SentimentONE/sentimentAPI](https://github.com/SentimentONE/sentimentAPI)  
-Fork realizado por: Matheus-es — https://github.com/Matheus-es/sentimentAPI
+**POST** `/sentiment`
+
+**Body:**
+
+```json
+{
+  "text": "O atendimento foi excelente e o produto chegou rápido!"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "sentiment": "POSITIVE",
+  "score": 0.98,
+  "text": "O atendimento foi excelente e o produto chegou rápido!"
+}
+```
+
+#### 2. Processar CSV (Batch)
+
+**POST** `/sentiment/batch`
+
+- **Multipart File:** `file` (arquivo .csv)
+- **Query Param:** `textColumn` (opcional, nome da coluna com os textos)
+
+#### 3. Estatísticas
+
+**GET** `/sentiment/statistics`
+
+**Response (200 OK):**
+
+```json
+{
+  "totalAnalyzed": 150,
+  "positiveCount": 120,
+  "negativeCount": 30,
+  "positivePercentage": 80.0
+}
+```
+
+#### 4. Histórico Recente
+
+**GET** `/sentiment/history`
+Retorna as últimas 100 análises realizadas.
+
+## 📂 Estrutura do Projeto
+
+```
+src/main/java/com/hackaton_one/sentiment_api/
+├── SentimentApiApplication.java    # Classe Main
+├── api/
+│   ├── controller/                 # Controladores REST
+│   └── dto/                        # Objetos de Transferência de Dados
+├── config/                         # Configurações (CORS, etc.)
+├── exceptions/                     # Tratamento de Exceções Global
+├── model/                          # Entidades JPA
+├── repository/                     # Repositórios (Acesso a Dados)
+└── service/                        # Regras de Negócio e Serviços
+```
+
+## 🤝 Contribuição
+
+1. Faça um **fork** do projeto.
+2. Crie uma nova branch com suas alterações: `git checkout -b feature/minha-feature`
+3. Salve as alterações e crie uma mensagem de commit contando o que você fez: `git commit -m "feat: Minha nova feature"`
+4. Envie as suas alterações: `git push origin feature/minha-feature`
+5. Abra um **Pull Request**.
+
+## 📝 Licença
+
+Este projeto está sob a licença [MIT](./LICENSE).
+
+---
+
+Desenvolvido com 💙 por [SentimentryTeam](https://github.com/SentimentONE)
